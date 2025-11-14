@@ -650,7 +650,7 @@ class WanVideoPipeline(BasePipeline):
                 dit_type = "wan2.2-i2v-a14b"
             elif model_state_dict["high_noise_model"]["patch_embedding.weight"].shape[1] == 16:
                 dit_type = "wan2.2-t2v-a14b"
-        elif model_state_dict["patch_embedding.weight"].shape[1] == 48:
+        elif has_any_key("patch_embedding.weight") and model_state_dict["patch_embedding.weight"].shape[1] == 48:
             dit_type = "wan2.2-ti2v-5b"
         elif has_any_key("img_emb.emb_pos", "condition_embedder.image_embedder.pos_embed"):
             dit_type = "wan2.1-flf2v-14b"
@@ -679,6 +679,30 @@ class WanVideoPipeline(BasePipeline):
             config.dit_attn_impl = AttnImpl.VSA
             if config.attn_params is None:
                 config.attn_params = VideoSparseAttentionParams(sparsity=0.9)
+
+    def update_weights(self, state_dicts: WanStateDicts) -> None:
+        is_dual_model_state_dict = (isinstance(state_dicts.model, dict) and
+                                     ("high_noise_model" in state_dicts.model or "low_noise_model" in state_dicts.model))
+        is_dual_model_pipeline = self.dit2 is not None
+
+        if is_dual_model_state_dict != is_dual_model_pipeline:
+            raise ValueError(
+                f"Model structure mismatch: pipeline has {'dual' if is_dual_model_pipeline else 'single'} model "
+                f"but state_dict is for {'dual' if is_dual_model_state_dict else 'single'} model. "
+                f"Cannot update weights between WAN 2.1 (single model) and WAN 2.2 (dual model)."
+            )
+
+        if is_dual_model_state_dict:
+            if "high_noise_model" in state_dicts.model:
+                self.update_component(self.dit, state_dicts.model["high_noise_model"], self.config.device, self.config.model_dtype)
+            if "low_noise_model" in state_dicts.model:
+                self.update_component(self.dit2, state_dicts.model["low_noise_model"], self.config.device, self.config.model_dtype)
+        else:
+            self.update_component(self.dit, state_dicts.model, self.config.device, self.config.model_dtype)
+
+        self.update_component(self.text_encoder, state_dicts.t5, self.config.device, self.config.t5_dtype)
+        self.update_component(self.vae, state_dicts.vae, self.config.device, self.config.vae_dtype)
+        self.update_component(self.image_encoder, state_dicts.image_encoder, self.config.device, self.config.image_encoder_dtype)
 
     def compile(self):
         self.dit.compile_repeated_blocks()
