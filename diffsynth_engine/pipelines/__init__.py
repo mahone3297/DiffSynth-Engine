@@ -8,6 +8,7 @@ from .wan_dmd import WanDMDPipeline
 from .qwen_image import QwenImagePipeline
 from .hunyuan3d_shape import Hunyuan3DShapePipeline
 from .z_image import ZImagePipeline
+from .z_image_omni_base import ZImageOmniBasePipeline
 
 __all__ = [
     "BasePipeline",
@@ -21,4 +22,5 @@ __all__ = [
     "QwenImagePipeline",
     "Hunyuan3DShapePipeline",
     "ZImagePipeline",
+    "ZImageOmniBasePipeline",
 ]

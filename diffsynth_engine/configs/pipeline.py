@@ -307,6 +307,8 @@ class ZImagePipelineConfig(AttentionConfig, OptimizationConfig, ParallelConfig, 
     vae_dtype: torch.dtype = torch.bfloat16
     encoder_path: Optional[str | os.PathLike | List[str | os.PathLike]] = None
     encoder_dtype: torch.dtype = torch.bfloat16
+    image_encoder_path: Optional[str | os.PathLike | List[str | os.PathLike]] = None
+    image_encoder_dtype: torch.dtype = torch.bfloat16
 
     @classmethod
     def basic_config(
@@ -314,6 +316,7 @@ class ZImagePipelineConfig(AttentionConfig, OptimizationConfig, ParallelConfig, 
         model_path: str | os.PathLike | List[str | os.PathLike],
         encoder_path: Optional[str | os.PathLike | List[str | os.PathLike]] = None,
         vae_path: Optional[str | os.PathLike | List[str | os.PathLike]] = None,
+        image_encoder_path: Optional[str | os.PathLike | List[str | os.PathLike]] = None,
         device: str = "cuda",
         parallelism: int = 1,
         offload_mode: Optional[str] = None,
@@ -324,6 +327,7 @@ class ZImagePipelineConfig(AttentionConfig, OptimizationConfig, ParallelConfig, 
             device=device,
             encoder_path=encoder_path,
             vae_path=vae_path,
+            image_encoder_path=image_encoder_path,
             parallelism=parallelism,
             use_cfg_parallel=True if parallelism > 1 else False,
             use_fsdp=True if parallelism > 1 else False,
@@ -391,6 +395,7 @@ class ZImageStateDicts:
     model: Dict[str, torch.Tensor]
     encoder: Dict[str, torch.Tensor]
     vae: Dict[str, torch.Tensor]
+    image_encoder: Optional[Dict[str, torch.Tensor]] = None
 
 
 def init_parallel_config(config: FluxPipelineConfig | QwenImagePipelineConfig | WanPipelineConfig | ZImagePipelineConfig):
