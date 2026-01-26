@@ -584,7 +584,8 @@ class ZImageDiT(PreTrainedModel):
         dtype: torch.dtype,
         **kwargs,
     ):
-        model = cls(device="meta", dtype=dtype, **kwargs)
+        with torch.device("meta"):
+            model = cls(device="meta", dtype=dtype, **kwargs)
         model = model.requires_grad_(False)
         model.load_state_dict(state_dict, assign=True)
         model.to(device=device, dtype=dtype, non_blocking=True)

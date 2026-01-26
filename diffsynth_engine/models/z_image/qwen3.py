@@ -59,8 +59,11 @@ class Qwen3Model(PreTrainedModel):
         device: str = "cuda:0",
         dtype: torch.dtype = torch.bfloat16,
     ):
-        model = cls(config=config, device="meta", dtype=dtype)
+        with torch.device("meta"):
+            model = cls(config=config, device="meta", dtype=dtype)
         model.requires_grad_(False)
+
+        model.rotary_emb = Qwen3RotaryEmbedding(config=config, device=device)
         model.load_state_dict(state_dict, assign=True)
         model.to(device=device, dtype=dtype, non_blocking=True)
         return model
